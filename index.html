@@ -224,7 +224,7 @@
                 </div>
             </div>
 
-            <!-- NEW: Monthly Recurring Commitments & Spend Card -->
+            <!-- Monthly Recurring Commitments & Spend Card -->
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
                 <div class="flex justify-between items-center pb-2 border-b border-gray-100">
                     <div>
@@ -414,7 +414,7 @@
                 <!-- Category Selector -->
                 <div id="category-picker-container">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Category</label>
-                    <select id="entry-category" class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
+                    <select id="entry-category" class="w-full bg-gray-100 text-gray-900 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
                         <!-- Dynamic options loaded -->
                     </select>
                 </div>
@@ -422,7 +422,7 @@
                 <!-- Account / Card Selector -->
                 <div id="account-picker-container">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Payment Method (Put purchase on)</label>
-                    <select id="entry-account" class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
+                    <select id="entry-account" class="w-full bg-gray-100 text-gray-900 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
                         <!-- Dynamic options loaded -->
                     </select>
                 </div>
@@ -534,7 +534,8 @@
                 'Chase Credit Card',
                 'AMEX Credit card',
                 'Debit Card / Cash'
-            ]
+            ],
+            exclusions: [] // Stores templates and specific month exclusion identifiers e.g. "templateId_YYYY-MM"
         };
 
         const presetColors = ['#007AFF', '#34C759', '#FF3B30', '#FF9500', '#FFCC00', '#AF52DE', '#5AC8FA', '#4CD964', '#FF2D55', '#5856D6', '#E5E5EA', '#34AADC'];
@@ -568,7 +569,6 @@
 
             request.onerror = function(event) {
                 console.error("IndexedDB error:", event.target.errorCode);
-                // Fallback to memory-only state if IndexedDB fails or is blocked
                 if (callback) callback();
             };
         }
@@ -585,7 +585,7 @@
             }
         }
 
-        // Load state from IndexedDB
+        // Load state from IndexedDB with safety structures
         function loadFromStorage(callback) {
             if (!dbInstance) {
                 if (callback) callback();
@@ -597,7 +597,30 @@
 
             request.onsuccess = function(event) {
                 if (event.target.result) {
-                    database = event.target.result;
+                    const loaded = event.target.result;
+                    
+                    // Core ledger sync
+                    database.transactions = loaded.transactions || [];
+                    database.exclusions = loaded.exclusions || [];
+
+                    // DYNAMIC HEAL & MIGRATION GATES
+                    // Prevents older databases from overriding categories or accounts lists
+                    if (loaded.categories && loaded.categories.length > 0) {
+                        database.categories = loaded.categories;
+                    }
+                    if (loaded.accounts && loaded.accounts.length > 0) {
+                        database.accounts = loaded.accounts;
+                    } else {
+                        // Restore credit card lists if database had none saved yet
+                        database.accounts = [
+                            'BOA Credit Card',
+                            'Discover Credit Card',
+                            'Apple Credit Card',
+                            'Chase Credit Card',
+                            'AMEX Credit card',
+                            'Debit Card / Cash'
+                        ];
+                    }
                 }
                 // Automatically generate any missed monthly recurring items
                 applyMonthlyRecurringTransactions();
@@ -641,7 +664,10 @@
                         tx.parentId === template.id && tx.date.substring(0, 7) === targetYM
                     );
 
-                    if (!alreadyExists) {
+                    // Check if this specific occurrence has been explicitly excluded/deleted by the user
+                    const isExcluded = database.exclusions && database.exclusions.includes(`${template.id}_${targetYM}`);
+
+                    if (!alreadyExists && !isExcluded) {
                         const targetDay = Math.min(tempDate.getDate(), new Date(targetYear, targetMonth + 1, 0).getDate());
                         const childDateStr = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
 
@@ -667,18 +693,6 @@
                 saveToStorage();
             }
         }
-
-        // Window Startup Lifecycle
-        window.addEventListener('DOMContentLoaded', () => {
-            const options = { weekday: 'long', month: 'long', day: 'numeric' };
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', options);
-            document.getElementById('entry-date').value = new Date().toISOString().substring(0, 10);
-
-            initStorage(() => {
-                buildColorPalette();
-                refreshAllUI();
-            });
-        });
 
         // ------------------ TAB ROUTER ------------------
         function toggleTab(tabName) {
@@ -903,6 +917,49 @@
                 `;
                 container.insertAdjacentHTML('beforeend', card);
             });
+        }
+
+        // AUTHORITATIVE SINGLE DELETE TRANSACTION METHOD
+        function deleteTransaction(id) {
+            const txn = database.transactions.find(t => t.id === id);
+            
+            if (txn && txn.parentId) {
+                const confirmDelete = confirm("This is an auto-generated recurring transaction. Do you want to cancel the entire recurring commitment? Click 'OK' to delete the commitment permanently, or 'Cancel' to just delete this month's single occurrence.");
+                if (confirmDelete) {
+                    database.transactions = database.transactions.filter(t => t.id !== txn.parentId && t.parentId !== txn.parentId);
+                } else {
+                    if (!database.exclusions) database.exclusions = [];
+                    const targetYM = txn.date.substring(0, 7);
+                    database.exclusions.push(`${txn.parentId}_${targetYM}`);
+                    database.transactions = database.transactions.filter(t => t.id !== id);
+                }
+            } else if (txn && txn.isMonthly && !txn.parentId) {
+                const confirmDelete = confirm("This is a master monthly template. Deleting it will also remove all its past monthly copies. Proceed?");
+                if (!confirmDelete) return;
+                database.transactions = database.transactions.filter(t => t.id !== id && t.parentId !== id);
+            } else {
+                database.transactions = database.transactions.filter(t => t.id !== id);
+            }
+            
+            saveToStorage();
+            refreshAllUI();
+            
+            if (activeTab === 'transactions') {
+                buildMonthCarousel();
+                renderTransactions();
+            }
+            showAlert('Deleted Successfully', 'The transaction has been removed.');
+        }
+
+        // Delete active commitment completely from category list
+        function deleteRecurringCommitment(id) {
+            const confirmDelete = confirm("Do you want to cancel this monthly commitment? This will delete the template and all associated monthly copies from your ledger.");
+            if (!confirmDelete) return;
+
+            database.transactions = database.transactions.filter(t => t.id !== id && t.parentId !== id);
+            saveToStorage();
+            refreshAllUI();
+            showAlert('Commitment Cancelled', 'The recurring commitment has been removed.');
         }
 
         // ------------------ CHARTS COMPONENT ------------------
@@ -1149,9 +1206,14 @@
                                 </p>
                             </div>
                         </div>
-                        <span class="text-sm font-bold flex-shrink-0 text-gray-800">
-                            ${formatCurrency(template.amount)}
-                        </span>
+                        <div class="flex items-center space-x-3 flex-shrink-0">
+                            <span class="text-sm font-bold text-gray-800">
+                                ${formatCurrency(template.amount)}
+                            </span>
+                            <button onclick="deleteRecurringCommitment('${template.id}')" class="text-gray-300 hover:text-ios-red p-1 rounded-full hover:bg-gray-50" title="Delete commitment">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', row);
@@ -1364,6 +1426,9 @@
                                 'Debit Card / Cash'
                             ];
                         }
+                        if (!parsed.exclusions) {
+                            parsed.exclusions = [];
+                        }
                         database = parsed;
                         saveToStorage();
                         refreshAllUI();
@@ -1387,6 +1452,24 @@
                 database = {
                     transactions: [],
                     categories: [
+                        { id: 'cat-rent', name: 'Rent', color: '#AF52DE' },
+                        { id: 'cat-phone', name: 'Phone', color: '#5AC8FA' },
+                        { id: 'cat-electricity', name: 'Electricity', color: '#FF9500' },
+                        { id: 'cat-gas', name: 'Gas', color: '#FFCC00' },
+                        { id: 'cat-water', name: 'Water', color: '#34AADC' },
+                        { id: 'cat-internet', name: 'Internet', color: '#5856D6' },
+                        { id: 'cat-civic', name: 'Civic', color: '#007AFF' },
+                        { id: 'cat-car-insurance', name: 'Car Insurance', color: '#FF2D55' },
+                        { id: 'cat-renters-insurance', name: 'Renters insurance', color: '#FF3B30' },
+                        { id: 'cat-groceries', name: 'Groceries', color: '#4CD964' },
+                        { id: 'cat-eating-out', name: 'Eating Out', color: '#FF9500' },
+                        { id: 'cat-medical', name: 'Medical', color: '#FF3B30' },
+                        { id: 'cat-hair-nails', name: 'Hair/Nails', color: '#FF2D55' },
+                        { id: 'cat-pet-insurance', name: 'Pet Insurance', color: '#007AFF' },
+                        { id: 'cat-pet-food', name: 'Pet Food', color: '#34C759' },
+                        { id: 'cat-pet-med', name: 'Pet medicine', color: '#AF52DE' },
+                        { id: 'cat-luchy', name: 'Luchy', color: '#FFCC00' },
+                        { id: 'cat-subscriptions', name: 'Subscriptions(Disney, Amazon, Spotify,iCloud)', color: '#5856D6' },
                         { id: 'cat-other', name: 'Other', color: '#8E8E93' }
                     ],
                     accounts: [
@@ -1396,7 +1479,8 @@
                         'Chase Credit Card',
                         'AMEX Credit card',
                         'Debit Card / Cash'
-                    ]
+                    ],
+                    exclusions: []
                 };
                 saveToStorage();
                 refreshAllUI();
@@ -1417,6 +1501,7 @@
             content.classList.add('translate-y-0', 'sm:scale-100');
         }
 
+        // Action sheet dismiss
         function closeModal(id) {
             const modal = document.getElementById(id);
             modal.classList.add('pointer-events-none');
@@ -1457,6 +1542,7 @@
             return '$' + Math.abs(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        // Standard iOS dates
         function formatDisplayDate(dateStr) {
             if (!dateStr) return '';
             const parts = dateStr.split('-');
