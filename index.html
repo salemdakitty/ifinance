@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>iFinance - Personal Financial Companion</title>
+    <title>Boona Money - Personal Financial Companion</title>
     <!-- Tailwind CSS for modern, fluid, beautiful interface -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for beautiful canvas rendering -->
@@ -65,7 +65,7 @@
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div>
                 <p id="current-date" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Thursday, June 25</p>
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900">iFinance</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Boona Money</h1>
             </div>
             <div class="flex space-x-2">
                 <!-- Quick Backup Reminder Info -->
@@ -205,7 +205,7 @@
 
 
         <!-- ================== CATEGORIES TAB ================== -->
-        <section id="tab-categories" class="space-y-4 hidden">
+        <section id="tab-categories" class="space-y-5 hidden">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900">Manage Categories</h2>
@@ -216,10 +216,28 @@
                 </button>
             </div>
 
+            <!-- Categories Card -->
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
                 <p class="text-xs text-gray-400 font-semibold mb-4 uppercase tracking-wider">Active Category Tags</p>
                 <div id="categories-grid-list" class="grid grid-cols-1 divide-y divide-gray-100">
                     <!-- Loaded dynamically with edit/delete controls -->
+                </div>
+            </div>
+
+            <!-- NEW: Monthly Recurring Commitments & Spend Card -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
+                <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-sm">Monthly Commitments</h3>
+                        <p class="text-[10px] text-gray-400 font-medium">Automatic fixed overhead</p>
+                    </div>
+                    <div class="text-right">
+                        <span id="recurring-overhead-total" class="text-base font-extrabold text-ios-red">$0.00</span>
+                        <span class="block text-[8px] uppercase tracking-wider text-gray-400 font-bold">Total / Mo</span>
+                    </div>
+                </div>
+                <div id="recurring-commitments-list" class="grid grid-cols-1 divide-y divide-gray-100">
+                    <!-- Loaded dynamically with all master recurring template profiles -->
                 </div>
             </div>
         </section>
@@ -415,6 +433,18 @@
                     <input type="date" id="entry-date" required class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
                 </div>
 
+                <!-- Monthly Recurring Toggle -->
+                <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-2xl py-3 px-4">
+                    <div>
+                        <span class="block text-xs font-bold text-gray-700">Monthly Recurring</span>
+                        <span class="block text-[10px] text-gray-400">Auto-clones this entry each month</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="entry-monthly" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ios-blue"></div>
+                    </label>
+                </div>
+
                 <!-- Submit Button -->
                 <button type="submit" class="w-full bg-ios-blue text-white py-4 rounded-2xl font-bold shadow-md hover:bg-blue-600 active:scale-[0.98] transition-all">
                     Add Transaction
@@ -500,7 +530,7 @@
             accounts: [
                 'BOA Credit Card',
                 'Discover Credit Card',
-                'Apply Credit Card',
+                'Apple Credit Card',
                 'Chase Credit Card',
                 'AMEX Credit card',
                 'Debit Card / Cash'
@@ -569,6 +599,8 @@
                 if (event.target.result) {
                     database = event.target.result;
                 }
+                // Automatically generate any missed monthly recurring items
+                applyMonthlyRecurringTransactions();
                 if (callback) callback();
             };
 
@@ -577,14 +609,71 @@
             };
         }
 
+        // Automated Monthly Recurring Generator Engine
+        function applyMonthlyRecurringTransactions() {
+            let stateChanged = false;
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth(); // 0-11
+
+            // Find master templates (isMonthly is true, and has no parentTemplateId)
+            const templates = database.transactions.filter(tx => tx.isMonthly && !tx.parentId);
+
+            templates.forEach(template => {
+                const tempDate = new Date(template.date + 'T00:00:00');
+                const tempYear = tempDate.getFullYear();
+                const tempMonth = tempDate.getMonth();
+
+                // Calculate month difference
+                let yearDiff = currentYear - tempYear;
+                let monthDiff = currentMonth - tempMonth;
+                let totalMonths = (yearDiff * 12) + monthDiff;
+
+                for (let i = 1; i <= totalMonths; i++) {
+                    let targetMonth = tempMonth + i;
+                    let targetYear = tempYear + Math.floor(targetMonth / 12);
+                    targetMonth = targetMonth % 12;
+
+                    const targetYM = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}`;
+
+                    // Check if a generated recurring copy already exists for this target Year-Month
+                    const alreadyExists = database.transactions.some(tx => 
+                        tx.parentId === template.id && tx.date.substring(0, 7) === targetYM
+                    );
+
+                    if (!alreadyExists) {
+                        const targetDay = Math.min(tempDate.getDate(), new Date(targetYear, targetMonth + 1, 0).getDate());
+                        const childDateStr = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+
+                        const childTx = {
+                            id: `tx-${template.id}-recur-${targetYM}`,
+                            amount: template.amount,
+                            desc: `${template.desc}`,
+                            type: template.type,
+                            category: template.category,
+                            date: childDateStr,
+                            account: template.account,
+                            isMonthly: true,
+                            parentId: template.id
+                        };
+
+                        database.transactions.push(childTx);
+                        stateChanged = true;
+                    }
+                }
+            });
+
+            if (stateChanged) {
+                saveToStorage();
+            }
+        }
+
         // Window Startup Lifecycle
         window.addEventListener('DOMContentLoaded', () => {
-            // Update UI dates
             const options = { weekday: 'long', month: 'long', day: 'numeric' };
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', options);
             document.getElementById('entry-date').value = new Date().toISOString().substring(0, 10);
 
-            // Initialize DB, then run render callbacks
             initStorage(() => {
                 buildColorPalette();
                 refreshAllUI();
@@ -593,18 +682,15 @@
 
         // ------------------ TAB ROUTER ------------------
         function toggleTab(tabName) {
-            // Hide all tabs
             ['dashboard', 'transactions', 'categories', 'trends', 'settings'].forEach(tab => {
                 document.getElementById(`tab-${tab}`).classList.add('hidden');
                 document.getElementById(`nav-${tab}`)?.classList.remove('ios-tab-active');
             });
 
-            // Show active tab
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
             document.getElementById(`nav-${tabName}`)?.classList.add('ios-tab-active');
             activeTab = tabName;
 
-            // Trigger specific Chart redraws when entering those tabs
             if (tabName === 'dashboard') {
                 renderDashboardCharts();
             } else if (tabName === 'trends') {
@@ -612,6 +698,9 @@
             } else if (tabName === 'transactions') {
                 buildMonthCarousel();
                 renderTransactions();
+            } else if (tabName === 'categories') {
+                renderCategoryList();
+                renderRecurringCommitments();
             }
         }
 
@@ -621,6 +710,7 @@
             populateCategorySelectors();
             populateAccountSelectors();
             renderCategoryList();
+            renderRecurringCommitments();
             renderRecentTransactions();
             renderDashboardCharts();
         }
@@ -630,7 +720,7 @@
             let totalExpense = 0;
 
             const today = new Date();
-            const currentYearMonthStr = today.toISOString().substring(0, 7); // e.g., "2026-06"
+            const currentYearMonthStr = today.toISOString().substring(0, 7);
 
             database.transactions.forEach(tx => {
                 const txYearMonth = tx.date.substring(0, 7);
@@ -642,7 +732,6 @@
 
             const netBalance = totalIncome - totalExpense;
 
-            // Render numbers with elegant styling
             document.getElementById('total-balance').innerText = formatCurrency(netBalance);
             document.getElementById('monthly-income-sum').innerText = formatCurrency(totalIncome);
             document.getElementById('monthly-expense-sum').innerText = formatCurrency(totalExpense);
@@ -665,19 +754,22 @@
                 
                 const itemHtml = `
                     <div class="flex items-center justify-between p-1">
-                        <div class="flex items-center space-x-3">
-                            <span class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm" style="background-color: ${color}">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <span class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0" style="background-color: ${color}">
                                 ${tx.category ? tx.category.charAt(0).toUpperCase() : '?' }
                             </span>
-                            <div>
-                                <h4 class="font-bold text-sm text-gray-800">${escapeHtml(tx.desc)}</h4>
-                                <p class="text-[10px] text-gray-400 font-medium">
+                            <div class="overflow-hidden">
+                                <div class="flex items-center space-x-1.5">
+                                    <h4 class="font-bold text-sm text-gray-800 truncate">${escapeHtml(tx.desc)}</h4>
+                                    ${tx.isMonthly ? `<span class="bg-blue-50 text-ios-blue text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center space-x-0.5"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6H16"/></svg><span>Monthly</span></span>` : ''}
+                                </div>
+                                <p class="text-[10px] text-gray-400 font-medium truncate">
                                     ${tx.category} • ${formatDisplayDate(tx.date)} 
                                     ${tx.account && tx.account !== 'N/A' ? ` • <span class="text-ios-blue font-semibold">${tx.account}</span>` : ''}
                                 </p>
                             </div>
                         </div>
-                        <span class="text-sm font-bold ${isExpense ? 'text-gray-800' : 'text-ios-green'}">
+                        <span class="text-sm font-bold flex-shrink-0 ${isExpense ? 'text-gray-800' : 'text-ios-green'}">
                             ${isExpense ? '-' : '+'}${formatCurrency(tx.amount)}
                         </span>
                     </div>
@@ -789,7 +881,10 @@
                                 ${tx.category ? tx.category.charAt(0).toUpperCase() : '?'}
                             </span>
                             <div class="overflow-hidden">
-                                <h4 class="font-bold text-sm text-gray-800 truncate">${escapeHtml(tx.desc)}</h4>
+                                <div class="flex items-center space-x-1.5">
+                                    <h4 class="font-bold text-sm text-gray-800 truncate">${escapeHtml(tx.desc)}</h4>
+                                    ${tx.isMonthly ? `<span class="bg-blue-50 text-ios-blue text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center space-x-0.5"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6H16"/></svg><span>Monthly</span></span>` : ''}
+                                </div>
                                 <p class="text-[10px] text-gray-400 font-medium truncate">
                                     ${tx.category ? tx.category : 'Income'} • ${formatDisplayDate(tx.date)} 
                                     ${tx.account && tx.account !== 'N/A' ? ` • <span class="text-ios-blue font-semibold">${tx.account}</span>` : ''}
@@ -810,21 +905,10 @@
             });
         }
 
-        function deleteTransaction(id) {
-            database.transactions = database.transactions.filter(t => t.id !== id);
-            saveToStorage();
-            refreshAllUI();
-            if (activeTab === 'transactions') {
-                buildMonthCarousel();
-                renderTransactions();
-            }
-            showAlert('Deleted Successfully', 'Your purchase entry has been permanently removed.');
-        }
-
         // ------------------ CHARTS COMPONENT ------------------
         function renderDashboardCharts() {
             const today = new Date();
-            const currentYearMonth = today.toISOString().substring(0, 7); // e.g. "2026-06"
+            const currentYearMonth = today.toISOString().substring(0, 7);
             
             const categorySums = {};
             let totalMonthExpenses = 0;
@@ -1004,6 +1088,7 @@
         // ------------------ MANAGE CATEGORIES TAB ------------------
         function renderCategoryList() {
             const container = document.getElementById('categories-grid-list');
+            if (!container) return;
             container.innerHTML = '';
 
             database.categories.forEach(cat => {
@@ -1023,6 +1108,56 @@
                 `;
                 container.insertAdjacentHTML('beforeend', row);
             });
+        }
+
+        // Render Monthly Commitments Panel
+        function renderRecurringCommitments() {
+            const container = document.getElementById('recurring-commitments-list');
+            const totalEl = document.getElementById('recurring-overhead-total');
+            if (!container || !totalEl) return;
+
+            container.innerHTML = '';
+            
+            // Filters out parent templates (isMonthly is true, and has no parentId)
+            const templates = database.transactions.filter(tx => tx.isMonthly && !tx.parentId);
+
+            let totalOverhead = 0;
+
+            if (templates.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-gray-400 text-xs">
+                        No monthly recurring purchases configured yet.
+                    </div>
+                `;
+                totalEl.innerText = formatCurrency(0);
+                return;
+            }
+
+            templates.forEach(template => {
+                const color = getCategoryColor(template.category);
+                totalOverhead += template.amount;
+
+                const row = `
+                    <div class="flex items-center justify-between py-3">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${color}"></span>
+                            <div class="overflow-hidden">
+                                <h4 class="font-bold text-sm text-gray-800 truncate">${escapeHtml(template.desc)}</h4>
+                                <p class="text-[10px] text-gray-400 font-medium truncate">
+                                    ${template.category} 
+                                    ${template.account && template.account !== 'N/A' ? ` • <span class="text-ios-blue font-semibold">${template.account}</span>` : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold flex-shrink-0 text-gray-800">
+                            ${formatCurrency(template.amount)}
+                        </span>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', row);
+            });
+
+            totalEl.innerText = formatCurrency(totalOverhead);
         }
 
         function deleteCategory(catId) {
@@ -1119,6 +1254,7 @@
             const date = document.getElementById('entry-date').value;
             const category = type === 'expense' ? document.getElementById('entry-category').value : 'Salary';
             const account = type === 'expense' ? document.getElementById('entry-account').value : 'N/A';
+            const isMonthly = document.getElementById('entry-monthly').checked;
 
             if (isNaN(amount) || amount <= 0) {
                 showAlert('Invalid Amount', 'Please input a financial value greater than $0.00.');
@@ -1132,17 +1268,25 @@
                 type: type,
                 category: category,
                 date: date,
-                account: account
+                account: account,
+                isMonthly: isMonthly,
+                parentId: null // Denotes this is the primary parent template
             };
 
             database.transactions.push(newTx);
-            saveToStorage();
             
+            // Clean up inputs
             document.getElementById('entry-amount').value = '';
             document.getElementById('entry-desc').value = '';
             document.getElementById('entry-date').value = new Date().toISOString().substring(0, 10);
+            document.getElementById('entry-monthly').checked = false;
             
             closeModal('add-transaction-modal');
+            
+            // Immediately run monthly recurring updates to populate if they entered a historic date
+            applyMonthlyRecurringTransactions();
+            
+            saveToStorage();
             refreshAllUI();
             
             showAlert('Success!', `Transaction recorded: "${desc}"`);
@@ -1157,7 +1301,7 @@
 
             const exists = database.categories.some(c => c.name.toLowerCase() === name.toLowerCase());
             if (exists) {
-                showAlert('Duplicate Found', `A category named "${name}" already exists! Please choose another name.`);
+                showAlert('Duplicate Found', `A category named "${name}" already exists!`);
                 return;
             }
 
@@ -1188,7 +1332,7 @@
                 
                 const now = new Date();
                 const stamp = now.toISOString().substring(0, 10);
-                triggerLink.download = `iFinance_Backup_${stamp}.json`;
+                triggerLink.download = `BoonaMoney_Backup_${stamp}.json`;
                 
                 document.body.appendChild(triggerLink);
                 triggerLink.click();
@@ -1214,7 +1358,7 @@
                             parsed.accounts = [
                                 'BOA Credit Card',
                                 'Discover Credit Card',
-                                'Apply Credit Card',
+                                'Apple Credit Card',
                                 'Chase Credit Card',
                                 'AMEX Credit card',
                                 'Debit Card / Cash'
@@ -1228,7 +1372,7 @@
                         toggleTab('dashboard');
                         showAlert('Restoration Complete', 'Local financial database loaded successfully. Welcome back!');
                     } else {
-                        showAlert('Parse Error', 'Format unrecognized. Ensure you selected a valid iFinance backup .json file.');
+                        showAlert('Parse Error', 'Format unrecognized. Ensure you selected a valid Boona Money backup .json file.');
                     }
                 } catch (err) {
                     showAlert('Read Error', 'Failed to read backup file structure: ' + err.message);
@@ -1248,7 +1392,7 @@
                     accounts: [
                         'BOA Credit Card',
                         'Discover Credit Card',
-                        'Apply Credit Card',
+                        'Apple Credit Card',
                         'Chase Credit Card',
                         'AMEX Credit card',
                         'Debit Card / Cash'
@@ -1332,7 +1476,6 @@
             return dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
 
-        // Basic escape function to guard UI rendering
         function escapeHtml(text) {
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
