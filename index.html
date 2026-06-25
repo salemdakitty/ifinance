@@ -268,7 +268,7 @@
                     <span>Local Storage Utilities</span>
                 </h3>
                 <p class="text-xs text-gray-500 leading-relaxed">
-                    All financial information is stored entirely inside your device browser's volatile memory. To secure your data, click <strong>Export Backup</strong> to download a file. Import it anytime on any machine to restore all your history instantly.
+                    All financial information is stored entirely inside your device browser's persistent storage engine (IndexedDB). Your data is 100% private. To back up your data or switch devices, click <strong>Export Backup</strong> to download a file. Import it anytime to restore your history.
                 </p>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
@@ -290,10 +290,10 @@
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-3">
                 <h3 class="font-bold text-gray-800 text-sm">How to Save and Launch Locally</h3>
                 <ol class="text-xs text-gray-600 space-y-2 list-decimal list-inside pl-1 leading-relaxed">
-                    <li>Click the <strong>Download / Export</strong> option in this window to save this file locally (as an <code class="bg-gray-100 px-1 py-0.5 rounded text-red-500">.html</code> file).</li>
-                    <li>Move this downloaded HTML file to any folder on your iPhone, iPad, Android, or PC.</li>
-                    <li>Simply double-tap / double-click the file to launch this fully functional application offline!</li>
-                    <li>You can also add it to your mobile Home Screen using the **Add to Home Screen** feature in mobile Safari or Chrome.</li>
+                    <li>Push the file changes to your **GitHub** repository.</li>
+                    <li>Open your secure GitHub Pages link in **Safari** on your iPhone.</li>
+                    <li>Tap the **Share** button in Safari and choose **Add to Home Screen** to run it natively.</li>
+                    <li>Your device will automatically persist your transactions even when you close the browser window.</li>
                 </ol>
             </div>
 
@@ -473,15 +473,9 @@
 
     <!-- ================== JAVASCRIPT APP LOGIC ================== -->
     <script>
-        // Setup initial structure state
+        // Setup initial default structure state
         let database = {
-            transactions: [
-                { id: 'tx-1', amount: 3500.00, desc: 'Biweekly Salary Payment', type: 'income', category: 'Salary', date: '2026-06-15', account: 'N/A' },
-                { id: 'tx-2', amount: 154.50, desc: 'Weekly Groceries Mart', type: 'expense', category: 'Groceries', date: '2026-06-18', account: 'Discover Credit Card' },
-                { id: 'tx-3', amount: 84.00, desc: 'Shell Gas Station Fill-up', type: 'expense', category: 'Gas', date: '2026-06-20', account: 'BOA Credit Card' },
-                { id: 'tx-4', amount: 14.99, desc: 'Streaming Movies Subs', type: 'expense', category: 'Subscriptions(Disney, Amazon, Spotify,iCloud)', date: '2026-06-22', account: 'Apply Credit Card' },
-                { id: 'tx-5', amount: 1200.00, desc: 'Monthly Studio Rent Payment', type: 'expense', category: 'Rent', date: '2026-06-01', account: 'Debit Card / Cash' }
-            ],
+            transactions: [],
             categories: [
                 { id: 'cat-rent', name: 'Rent', color: '#AF52DE' },
                 { id: 'cat-phone', name: 'Phone', color: '#5AC8FA' },
@@ -520,6 +514,69 @@
         let pieChartInstance = null;
         let barChartInstance = null;
 
+        // IndexedDB Configuration
+        const DB_NAME = 'iFinanceLocalDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'financial_state';
+        let dbInstance = null;
+
+        // Initialize Local Persistent Storage Engine
+        function initStorage(callback) {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onupgradeneeded = function(event) {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+
+            request.onsuccess = function(event) {
+                dbInstance = event.target.result;
+                loadFromStorage(callback);
+            };
+
+            request.onerror = function(event) {
+                console.error("IndexedDB error:", event.target.errorCode);
+                // Fallback to memory-only state if IndexedDB fails or is blocked
+                if (callback) callback();
+            };
+        }
+
+        // Save state down to IndexedDB
+        function saveToStorage() {
+            if (!dbInstance) return;
+            try {
+                const transaction = dbInstance.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.put(database, 'user_data');
+            } catch (err) {
+                console.error("Failed to write to IndexedDB:", err);
+            }
+        }
+
+        // Load state from IndexedDB
+        function loadFromStorage(callback) {
+            if (!dbInstance) {
+                if (callback) callback();
+                return;
+            }
+            const transaction = dbInstance.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get('user_data');
+
+            request.onsuccess = function(event) {
+                if (event.target.result) {
+                    database = event.target.result;
+                }
+                if (callback) callback();
+            };
+
+            request.onerror = function() {
+                if (callback) callback();
+            };
+        }
+
         // Window Startup Lifecycle
         window.addEventListener('DOMContentLoaded', () => {
             // Update UI dates
@@ -527,9 +584,11 @@
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', options);
             document.getElementById('entry-date').value = new Date().toISOString().substring(0, 10);
 
-            // Populate system state
-            buildColorPalette();
-            refreshAllUI();
+            // Initialize DB, then run render callbacks
+            initStorage(() => {
+                buildColorPalette();
+                refreshAllUI();
+            });
         });
 
         // ------------------ TAB ROUTER ------------------
@@ -570,7 +629,6 @@
             let totalIncome = 0;
             let totalExpense = 0;
 
-            // Simple monthly filtering based on "current month" (calculated relative to today or the latest entry date)
             const today = new Date();
             const currentYearMonthStr = today.toISOString().substring(0, 7); // e.g., "2026-06"
 
@@ -594,7 +652,6 @@
             const container = document.getElementById('recent-transactions-list');
             container.innerHTML = '';
 
-            // Sort newest first, take top 4
             const sorted = [...database.transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4);
 
             if (sorted.length === 0) {
@@ -634,14 +691,11 @@
             const carousel = document.getElementById('month-carousel');
             carousel.innerHTML = '';
 
-            // Extract unique Year-Month combinations from transactions
             const months = new Set();
             database.transactions.forEach(tx => months.add(tx.date.substring(0, 7)));
             
-            // Sort months descending
             const sortedMonths = Array.from(months).sort((a, b) => b.localeCompare(a));
 
-            // Default 'All' selection tag
             const allBtnActive = activeFilterMonth === 'all' ? 'bg-ios-blue text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
             carousel.insertAdjacentHTML('beforeend', `
                 <button onclick="setMonthFilter('all')" class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${allBtnActive}">
@@ -690,16 +744,12 @@
             let totalIn = 0;
             let totalOut = 0;
 
-            // Filter chain
             const filtered = database.transactions.filter(tx => {
-                // Month Check
                 if (activeFilterMonth !== 'all' && tx.date.substring(0, 7) !== activeFilterMonth) {
                     return false;
                 }
-                // Segment Check
                 if (transactionFilter === 'expense' && tx.type !== 'expense') return false;
                 if (transactionFilter === 'income' && tx.type !== 'income') return false;
-                // Search Check
                 if (searchVal) {
                     const matchDesc = tx.desc.toLowerCase().includes(searchVal);
                     const matchCat = tx.category.toLowerCase().includes(searchVal);
@@ -709,10 +759,8 @@
                 return true;
             });
 
-            // Sort newest first
             filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            // Accumulate financial overview of filtered set
             filtered.forEach(tx => {
                 if (tx.type === 'income') totalIn += tx.amount;
                 else totalOut += tx.amount;
@@ -752,7 +800,6 @@
                             <span class="text-sm font-extrabold ${isExpense ? 'text-gray-800' : 'text-ios-green'}">
                                 ${isExpense ? '-' : '+'}${formatCurrency(tx.amount)}
                             </span>
-                            <!-- Swipe left/Delete shortcut -->
                             <button onclick="deleteTransaction('${tx.id}')" class="text-gray-300 hover:text-ios-red p-1 rounded-full hover:bg-gray-50" title="Delete record">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             </button>
@@ -763,9 +810,9 @@
             });
         }
 
-        // Delete active item handler
         function deleteTransaction(id) {
             database.transactions = database.transactions.filter(t => t.id !== id);
+            saveToStorage();
             refreshAllUI();
             if (activeTab === 'transactions') {
                 buildMonthCarousel();
@@ -776,11 +823,9 @@
 
         // ------------------ CHARTS COMPONENT ------------------
         function renderDashboardCharts() {
-            // Prep data
             const today = new Date();
             const currentYearMonth = today.toISOString().substring(0, 7); // e.g. "2026-06"
             
-            // Group expenses of current month by Category
             const categorySums = {};
             let totalMonthExpenses = 0;
 
@@ -795,7 +840,6 @@
             const dataValues = Object.values(categorySums);
             const backgroundColors = labels.map(lbl => getCategoryColor(lbl));
 
-            // Setup custom legend UI
             const legendGrid = document.getElementById('chart-legend-grid');
             legendGrid.innerHTML = '';
 
@@ -811,7 +855,6 @@
                 canvasElement.classList.remove('opacity-0');
             }
 
-            // Populate Legend
             labels.forEach((lbl, idx) => {
                 const val = dataValues[idx];
                 const pct = ((val / totalMonthExpenses) * 100).toFixed(0);
@@ -827,12 +870,10 @@
                 legendGrid.insertAdjacentHTML('beforeend', legendItem);
             });
 
-            // Destroy existing instance to avoid canvas overlapping glitches
             if (pieChartInstance) {
                 pieChartInstance.destroy();
             }
 
-            // Build new Chart.js
             const ctx = canvasElement.getContext('2d');
             pieChartInstance = new Chart(ctx, {
                 type: 'doughnut',
@@ -849,14 +890,10 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false // We render our own clean iOS-style legends underneath
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
-                                    return ` $${context.raw.toFixed(2)}`;
-                                }
+                                label: function(context) { return ` $${context.raw.toFixed(2)}`; }
                             }
                         }
                     },
@@ -866,11 +903,10 @@
         }
 
         function renderTrendsCharts() {
-            // Group transactions by month
             const monthlyData = {};
 
             database.transactions.forEach(tx => {
-                const mY = tx.date.substring(0, 7); // "YYYY-MM"
+                const mY = tx.date.substring(0, 7);
                 if (!monthlyData[mY]) {
                     monthlyData[mY] = { income: 0, expense: 0 };
                 }
@@ -881,7 +917,6 @@
                 }
             });
 
-            // Sort months chronological
             const sortedMonths = Object.keys(monthlyData).sort();
 
             const ledgerList = document.getElementById('month-by-month-list');
@@ -903,7 +938,6 @@
             const incomes = [];
             const expenses = [];
 
-            // Populate charts payload & detail lists
             sortedMonths.forEach(mY => {
                 const label = formatMonthLabel(mY);
                 const data = monthlyData[mY];
@@ -938,18 +972,8 @@
                 data: {
                     labels: chartLabels,
                     datasets: [
-                        {
-                            label: 'Income',
-                            data: incomes,
-                            backgroundColor: '#34C759',
-                            borderRadius: 6
-                        },
-                        {
-                            label: 'Expenses',
-                            data: expenses,
-                            backgroundColor: '#FF3B30',
-                            borderRadius: 6
-                        }
+                        { label: 'Income', data: incomes, backgroundColor: '#34C759', borderRadius: 6 },
+                        { label: 'Expenses', data: expenses, backgroundColor: '#FF3B30', borderRadius: 6 }
                     ]
                 },
                 options: {
@@ -958,27 +982,18 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: '#F2F2F7'
-                            },
-                            ticks: {
-                                font: { size: 9 }
-                            }
+                            grid: { color: '#F2F2F7' },
+                            ticks: { font: { size: 9 } }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: {
-                                font: { size: 9, weight: 'bold' }
-                            }
+                            ticks: { font: { size: 9, weight: 'bold' } }
                         }
                     },
                     plugins: {
                         legend: {
                             position: 'top',
-                            labels: {
-                                boxWidth: 12,
-                                font: { size: 10 }
-                            }
+                            labels: { boxWidth: 12, font: { size: 10 } }
                         }
                     }
                 }
@@ -992,7 +1007,6 @@
             container.innerHTML = '';
 
             database.categories.forEach(cat => {
-                // Count how many purchases use this category
                 const usageCount = database.transactions.filter(tx => tx.category === cat.name).length;
 
                 const row = `
@@ -1002,8 +1016,6 @@
                             <span class="text-sm font-bold text-gray-800">${escapeHtml(cat.name)}</span>
                             <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full font-medium">${usageCount} entries</span>
                         </div>
-                        
-                        <!-- Actions -->
                         <button onclick="deleteCategory('${cat.id}')" class="text-gray-300 hover:text-ios-red p-1.5 rounded-full" title="Remove custom category">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         </button>
@@ -1017,13 +1029,11 @@
             const target = database.categories.find(c => c.id === catId);
             if (!target) return;
 
-            // Protection of default custom category 'Other'
             if (target.name === 'Other') {
                 showAlert('Operation Denied', 'The tag "Other" acts as a fallback system categorizer and cannot be removed.');
                 return;
             }
 
-            // Remap existing items using this category to "Other"
             database.transactions.forEach(tx => {
                 if (tx.category === target.name) {
                     tx.category = 'Other';
@@ -1031,6 +1041,7 @@
             });
 
             database.categories = database.categories.filter(c => c.id !== catId);
+            saveToStorage();
             refreshAllUI();
             showAlert('Category Deleted', 'Associated transactions have been set to "Other".');
         }
@@ -1040,9 +1051,7 @@
             selectEl.innerHTML = '';
             
             database.categories.forEach(cat => {
-                selectEl.insertAdjacentHTML('beforeend', `
-                    <option value="${cat.name}">${cat.name}</option>
-                `);
+                selectEl.insertAdjacentHTML('beforeend', `<option value="${cat.name}">${cat.name}</option>`);
             });
         }
 
@@ -1051,9 +1060,7 @@
             selectEl.innerHTML = '';
             
             database.accounts.forEach(acc => {
-                selectEl.insertAdjacentHTML('beforeend', `
-                    <option value="${acc}">${acc}</option>
-                `);
+                selectEl.insertAdjacentHTML('beforeend', `<option value="${acc}">${acc}</option>`);
             });
         }
 
@@ -1075,11 +1082,9 @@
         }
 
         function selectPaletteColor(el, color) {
-            // Remove rings from all peers
             const btns = el.parentElement.querySelectorAll('button');
             btns.forEach(b => b.className = b.className.replace(/ring-4 ring-offset-2 ring-ios-blue/g, '').trim());
 
-            // Add back to active
             el.className += ' ring-4 ring-offset-2 ring-ios-blue';
             document.getElementById('cat-selected-color').value = color;
         }
@@ -1131,8 +1136,8 @@
             };
 
             database.transactions.push(newTx);
+            saveToStorage();
             
-            // Reset input fields
             document.getElementById('entry-amount').value = '';
             document.getElementById('entry-desc').value = '';
             document.getElementById('entry-date').value = new Date().toISOString().substring(0, 10);
@@ -1150,7 +1155,6 @@
             const name = document.getElementById('cat-name').value.trim();
             const color = document.getElementById('cat-selected-color').value;
 
-            // Check duplicate tags
             const exists = database.categories.some(c => c.name.toLowerCase() === name.toLowerCase());
             if (exists) {
                 showAlert('Duplicate Found', `A category named "${name}" already exists! Please choose another name.`);
@@ -1164,6 +1168,7 @@
             };
 
             database.categories.push(newCat);
+            saveToStorage();
             document.getElementById('cat-name').value = '';
             closeModal('add-category-modal');
             refreshAllUI();
@@ -1204,9 +1209,7 @@
                 try {
                     const parsed = JSON.parse(evt.target.result);
                     
-                    // Validate basic safety schemas
                     if (parsed && Array.isArray(parsed.transactions) && Array.isArray(parsed.categories)) {
-                        // Ensure accounts exist if recovering an old database structure
                         if (!parsed.accounts) {
                             parsed.accounts = [
                                 'BOA Credit Card',
@@ -1218,8 +1221,8 @@
                             ];
                         }
                         database = parsed;
+                        saveToStorage();
                         refreshAllUI();
-                        // Reset filters & views
                         activeFilterMonth = 'all';
                         transactionFilter = 'all';
                         toggleTab('dashboard');
@@ -1251,6 +1254,7 @@
                         'Debit Card / Cash'
                     ]
                 };
+                saveToStorage();
                 refreshAllUI();
                 toggleTab('dashboard');
                 showAlert('Database Cleared', 'All entries have been cleared. Ready for fresh setup!');
@@ -1264,7 +1268,6 @@
             modal.classList.remove('pointer-events-none');
             modal.classList.add('opacity-100');
             
-            // Slide sheet up anim
             const content = modal.firstElementChild;
             content.classList.remove('translate-y-full', 'sm:scale-95');
             content.classList.add('translate-y-0', 'sm:scale-100');
@@ -1280,7 +1283,6 @@
             content.classList.add('translate-y-full', 'sm:scale-95');
         }
 
-        // Custom non-blocking popups
         function showAlert(title, message) {
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-message').innerText = message;
@@ -1292,7 +1294,6 @@
             modal.firstElementChild.classList.add('scale-100');
         }
 
-        // Action dismiss popup
         function closeAlert() {
             const modal = document.getElementById('alert-modal');
             modal.classList.add('pointer-events-none');
@@ -1308,7 +1309,6 @@
             return match ? match.color : '#8E8E93';
         }
 
-        // General Currency String Formatter
         function formatCurrency(num) {
             return '$' + Math.abs(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
@@ -1332,6 +1332,7 @@
             return dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
 
+        // Basic escape function to guard UI rendering
         function escapeHtml(text) {
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
