@@ -123,7 +123,7 @@
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-gray-800">Category Breakdown</h3>
-                    <p id="current-month-lbl" class="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">This Month</p>
+                    <p id="current-month-lbl" class="text-xs font-semibold text-ios-blue bg-blue-50 px-3 py-1 rounded-full">This Month</p>
                 </div>
                 
                 <!-- Chart Wrapper Container -->
@@ -286,7 +286,7 @@
                     <span>Local Storage Utilities</span>
                 </h3>
                 <p class="text-xs text-gray-500 leading-relaxed">
-                    All financial information is stored entirely inside your device browser's persistent storage engine (IndexedDB). Your data is 100% private. To back up your data or switch devices, click <strong>Export Backup</strong> to download a file. Import it anytime to restore your history.
+                    All financial information is stored entirely inside your device browser's persistent storage engine (IndexedDB & LocalStorage). Your data is 100% private. To back up your data or switch devices, click <strong>Export Backup</strong> to download a file. Import it anytime to restore your history.
                 </p>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
@@ -574,12 +574,20 @@
 
             request.onerror = function(event) {
                 console.error("IndexedDB error:", event.target.errorCode);
-                if (callback) callback();
+                loadFromStorage(callback); // Fallback to LocalStorage immediately on error
             };
         }
 
-        // Save state down to IndexedDB
+        // Save state down to both IndexedDB and LocalStorage (Dual-Redundancy)
         function saveToStorage() {
+            // 1. Immediately backup to LocalStorage for zero-lag safety
+            try {
+                localStorage.setItem('boona_money_state', JSON.stringify(database));
+            } catch (err) {
+                console.error("Failed to write to LocalStorage:", err);
+            }
+
+            // 2. Persist safely in IndexedDB
             if (!dbInstance) return;
             try {
                 const transaction = dbInstance.transaction([STORE_NAME], 'readwrite');
@@ -592,50 +600,61 @@
 
         // Load state from IndexedDB with safety structures
         function loadFromStorage(callback) {
+            // First pass: instantly load from local storage if available to keep layout snappy
+            try {
+                const localData = localStorage.getItem('boona_money_state');
+                if (localData) {
+                    const parsed = JSON.parse(localData);
+                    if (parsed && Array.isArray(parsed.transactions)) {
+                        applyLoadedData(parsed);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load from LocalStorage:", err);
+            }
+
             if (!dbInstance) {
+                applyMonthlyRecurringTransactions();
                 if (callback) callback();
                 return;
             }
+
             const transaction = dbInstance.transaction([STORE_NAME], 'readonly');
             const store = transaction.objectStore(STORE_NAME);
             const request = store.get('user_data');
 
             request.onsuccess = function(event) {
                 if (event.target.result) {
-                    const loaded = event.target.result;
-                    
-                    // Core ledger sync
-                    database.transactions = loaded.transactions || [];
-                    database.exclusions = loaded.exclusions || [];
-
-                    // HEAL GATES
-                    // Prevents older database structures (or corrupted wipes) from locking categories to just "Other"
-                    if (loaded.categories && loaded.categories.length > 1) {
-                        database.categories = loaded.categories;
-                    } else {
-                        // Restore defaults if loaded data was deleted/wiped incorrectly
-                        database.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
-                    }
-
-                    if (loaded.accounts && loaded.accounts.length > 0) {
-                        database.accounts = loaded.accounts;
-                    } else {
-                        database.accounts = [...DEFAULT_ACCOUNTS];
-                    }
-                } else {
-                    // Fresh startup database
-                    database.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
-                    database.accounts = [...DEFAULT_ACCOUNTS];
+                    applyLoadedData(event.target.result);
                 }
-                
                 // Automatically generate any missed monthly recurring items
                 applyMonthlyRecurringTransactions();
                 if (callback) callback();
             };
 
             request.onerror = function() {
+                applyMonthlyRecurringTransactions();
                 if (callback) callback();
             };
+        }
+
+        // Standardize data healing loader
+        function applyLoadedData(loaded) {
+            database.transactions = loaded.transactions || [];
+            database.exclusions = loaded.exclusions || [];
+
+            // Prevent empty or cleared category overrides
+            if (loaded.categories && loaded.categories.length > 1) {
+                database.categories = loaded.categories;
+            } else {
+                database.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+            }
+
+            if (loaded.accounts && loaded.accounts.length > 0) {
+                database.accounts = loaded.accounts;
+            } else {
+                database.accounts = [...DEFAULT_ACCOUNTS];
+            }
         }
 
         // Automated Monthly Recurring Generator Engine
@@ -700,6 +719,26 @@
             }
         }
 
+        // Window Startup Lifecycle
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+
+            // Format headers to local system timezone
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').innerText = today.toLocaleDateString('en-US', options);
+            
+            // Set date-picker's initial value based on local system time instead of UTC to avoid timezone drift
+            document.getElementById('entry-date').value = `${year}-${month}-${day}`;
+
+            initStorage(() => {
+                buildColorPalette();
+                refreshAllUI();
+            });
+        });
+
         // ------------------ TAB ROUTER ------------------
         function toggleTab(tabName) {
             ['dashboard', 'transactions', 'categories', 'trends', 'settings'].forEach(tab => {
@@ -740,7 +779,9 @@
             let totalExpense = 0;
 
             const today = new Date();
-            const currentYearMonthStr = today.toISOString().substring(0, 7);
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const currentYearMonthStr = `${year}-${month}`; // FIXED: Uses local timezone date string instead of UTC
 
             database.transactions.forEach(tx => {
                 const txYearMonth = tx.date.substring(0, 7);
@@ -834,7 +875,6 @@
             renderTransactions();
         }
 
-        // Segments tabs
         function setTxnFilter(type) {
             transactionFilter = type;
             ['all', 'expense', 'income'].forEach(t => {
@@ -971,8 +1011,13 @@
         // ------------------ CHARTS COMPONENT ------------------
         function renderDashboardCharts() {
             const today = new Date();
-            const currentYearMonth = today.toISOString().substring(0, 7);
+            const year = today.getFullYear();
+            const monthStr = String(today.getMonth() + 1).padStart(2, '0');
+            const currentYearMonth = `${year}-${monthStr}`; // FIXED: Local timezone monthly calculation
             
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('current-month-lbl').innerText = `${monthNames[today.getMonth()]} ${year}`;
+
             const categorySums = {};
             let totalMonthExpenses = 0;
 
@@ -1343,10 +1388,15 @@
 
             database.transactions.push(newTx);
             
-            // Clean up inputs
+            // Clean up inputs and reset back to local date values
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+
             document.getElementById('entry-amount').value = '';
             document.getElementById('entry-desc').value = '';
-            document.getElementById('entry-date').value = new Date().toISOString().substring(0, 10);
+            document.getElementById('entry-date').value = `${year}-${month}-${day}`;
             document.getElementById('entry-monthly').checked = false;
             
             closeModal('add-transaction-modal');
