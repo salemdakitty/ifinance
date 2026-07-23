@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Boona Money - Personal Financial Companion</title>
-    <!-- Tailwind CSS for modern, fluid, beautiful interface -->
+    <!-- Tailwind CSS for modern, fluid interface -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for beautiful canvas rendering -->
+    <!-- Chart.js for canvas rendering -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <!-- Google Fonts SF Pro / Inter equivalent styling -->
+    <!-- Google Fonts Inter styling -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -45,7 +45,6 @@
         .ios-tab-active {
             color: #007AFF;
         }
-        /* Custom scrollbars */
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -64,13 +63,11 @@
     <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 pt-4 pb-3 safe-top">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div>
-                <p id="current-date" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Thursday, June 25</p>
+                <p id="current-date" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Wednesday, July 22</p>
                 <h1 class="text-2xl font-bold tracking-tight text-gray-900">Boona Money</h1>
             </div>
             <div class="flex space-x-2">
-                <!-- Quick Backup Reminder Info -->
-                <button onclick="toggleTab('settings')" class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" title="Backup & Help">
-                    <!-- Backup Gear/Download SVG Icon -->
+                <button onclick="toggleTab('settings')" class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" title="Backup & Settings">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
@@ -126,19 +123,15 @@
                     <p id="current-month-lbl" class="text-xs font-semibold text-ios-blue bg-blue-50 px-3 py-1 rounded-full">This Month</p>
                 </div>
                 
-                <!-- Chart Wrapper Container -->
                 <div class="relative w-full aspect-square max-w-[240px] mx-auto my-4 flex items-center justify-center">
                     <canvas id="categoryPieChart" class="w-full h-full"></canvas>
-                    <!-- Empty State Placeholder -->
                     <div id="chart-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center bg-gray-50 rounded-2xl p-4 hidden">
                         <p class="text-gray-400 text-xs font-medium">No expenses logged for this month yet.</p>
                         <button onclick="openModal('add-transaction-modal')" class="mt-2 text-xs text-ios-blue font-semibold">Add First Purchase</button>
                     </div>
                 </div>
 
-                <!-- Custom Visual Legend Grid -->
                 <div id="chart-legend-grid" class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100 text-xs">
-                    <!-- Dynamic Items will render here -->
                 </div>
             </div>
 
@@ -149,7 +142,6 @@
                     <button onclick="toggleTab('transactions')" class="text-ios-blue text-sm font-semibold hover:opacity-80">See All</button>
                 </div>
                 <div id="recent-transactions-list" class="space-y-3.5">
-                    <!-- Dynamic items loaded here -->
                 </div>
             </div>
         </section>
@@ -164,12 +156,9 @@
                 </button>
             </div>
 
-            <!-- Month Selection Carousel (iOS Style) -->
             <div class="flex overflow-x-auto py-2 space-x-2 no-scrollbar" id="month-carousel">
-                <!-- Dynamically populated month tags -->
             </div>
 
-            <!-- Search / Filter Card -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3">
                 <div class="relative">
                     <input type="text" id="txn-search-input" oninput="renderTransactions()" placeholder="Search transactions..." class="w-full bg-gray-100 border-0 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
@@ -184,7 +173,6 @@
                 </div>
             </div>
 
-            <!-- Real-time Summary Card -->
             <div class="bg-gray-100 rounded-2xl p-4 flex justify-between text-center">
                 <div class="flex-1">
                     <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Filtered In</span>
@@ -197,9 +185,7 @@
                 </div>
             </div>
 
-            <!-- Full Scrollable list of Items -->
             <div id="full-transactions-list" class="space-y-3">
-                <!-- Loaded Dynamically -->
             </div>
         </section>
 
@@ -208,23 +194,26 @@
         <section id="tab-categories" class="space-y-5 hidden">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900">Manage Categories</h2>
-                    <p class="text-xs text-gray-500">Add or edit tags for purchases</p>
+                    <h2 class="text-xl font-bold text-gray-900">Manage Finances</h2>
+                    <p class="text-xs text-gray-500">Tap category or card to view purchases</p>
                 </div>
                 <button onclick="openModal('add-category-modal')" class="bg-gray-100 hover:bg-gray-200 text-ios-blue px-3.5 py-1.5 rounded-full text-xs font-bold">
                     + New Category
                 </button>
             </div>
 
-            <!-- Categories Card -->
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
-                <p class="text-xs text-gray-400 font-semibold mb-4 uppercase tracking-wider">Active Category Tags</p>
+                <p class="text-xs text-gray-400 font-semibold mb-3 uppercase tracking-wider">Active Category Tags</p>
                 <div id="categories-grid-list" class="grid grid-cols-1 divide-y divide-gray-100">
-                    <!-- Loaded dynamically with edit/delete controls -->
                 </div>
             </div>
 
-            <!-- Monthly Recurring Commitments & Spend Card -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-400 font-semibold mb-3 uppercase tracking-wider">Payment Methods</p>
+                <div id="accounts-grid-list" class="grid grid-cols-1 divide-y divide-gray-100">
+                </div>
+            </div>
+
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
                 <div class="flex justify-between items-center pb-2 border-b border-gray-100">
                     <div>
@@ -237,7 +226,6 @@
                     </div>
                 </div>
                 <div id="recurring-commitments-list" class="grid grid-cols-1 divide-y divide-gray-100">
-                    <!-- Loaded dynamically with all master recurring template profiles -->
                 </div>
             </div>
         </section>
@@ -250,15 +238,30 @@
                 <p class="text-xs text-gray-500">Track and compare your financial progress</p>
             </div>
 
-            <!-- Double Bar Chart Container -->
+            <!-- Double Bar Chart Container: Income vs Expenses -->
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
                 <h3 class="font-bold text-gray-800 text-sm mb-4">Income vs. Expenses Comparison</h3>
                 <div class="relative w-full aspect-[4/3] max-w-sm mx-auto">
                     <canvas id="trendsBarChart"></canvas>
                 </div>
-                <!-- Empty State -->
                 <div id="trends-empty-state" class="hidden text-center py-8 text-gray-400 text-xs">
                     Please log transactions across multiple months to visualize trend analysis here!
+                </div>
+            </div>
+
+            <!-- NEW: Payment Method Spending Trends Card -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
+                <div>
+                    <h3 class="font-bold text-gray-800 text-sm">Card & Account Spending Trends</h3>
+                    <p class="text-[10px] text-gray-400">Monthly breakdown across payment methods</p>
+                </div>
+                
+                <div class="relative w-full aspect-[4/3] max-w-sm mx-auto">
+                    <canvas id="cardTrendsBarChart"></canvas>
+                </div>
+
+                <div id="card-trends-summary-list" class="grid grid-cols-1 gap-2 pt-2 border-t border-gray-100">
+                    <!-- Dynamic Card Totals rendered here -->
                 </div>
             </div>
 
@@ -266,7 +269,6 @@
             <div class="space-y-3">
                 <h3 class="font-bold text-gray-800 text-sm px-1">Monthly Ledger Summaries</h3>
                 <div id="month-by-month-list" class="space-y-3">
-                    <!-- Dynamic Month stats here -->
                 </div>
             </div>
         </section>
@@ -279,23 +281,33 @@
                 <p class="text-xs text-gray-500">Manage data local backups, privacy, & setup</p>
             </div>
 
-            <!-- Database Backup Panel (LOCAL EXPORT IMPORT) -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-3">
+                <h3 class="font-bold text-gray-800 text-sm flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-ios-green"></span>
+                    <span>Monthly Checking Verification</span>
+                </h3>
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    Set or update your actual checking account starting balance for this month to keep your Net Balance completely accurate.
+                </p>
+                <button onclick="openModal('monthly-reset-modal')" class="w-full bg-ios-green text-white py-3 rounded-xl text-xs font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all">
+                    Reset / Update Checking Balance
+                </button>
+            </div>
+
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
                 <h3 class="font-bold text-gray-800 text-sm flex items-center space-x-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
                     <span>Local Storage Utilities</span>
                 </h3>
                 <p class="text-xs text-gray-500 leading-relaxed">
-                    All financial information is stored entirely inside your device browser's persistent storage engine (IndexedDB & LocalStorage). Your data is 100% private. To back up your data or switch devices, click <strong>Export Backup</strong> to download a file. Import it anytime to restore your history.
+                    All financial information is stored entirely inside your device browser's persistent storage engine (IndexedDB & LocalStorage).
                 </p>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    <!-- Export JSON -->
                     <button onclick="exportDataBackup()" class="bg-ios-blue text-white py-3 px-4 rounded-xl text-xs font-semibold text-center shadow-sm hover:opacity-90 active:scale-95 transition-transform flex flex-col items-center justify-center space-y-1.5">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         <span>Export Backup (.json)</span>
                     </button>
-                    <!-- Import JSON -->
                     <label class="bg-gray-100 hover:bg-gray-200 cursor-pointer text-gray-700 py-3 px-4 rounded-xl text-xs font-semibold text-center flex flex-col items-center justify-center space-y-1.5 active:scale-95 transition-transform">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         <span>Import Backup (.json)</span>
@@ -304,18 +316,6 @@
                 </div>
             </div>
 
-            <!-- Information Panel -->
-            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-3">
-                <h3 class="font-bold text-gray-800 text-sm">How to Save and Launch Locally</h3>
-                <ol class="text-xs text-gray-600 space-y-2 list-decimal list-inside pl-1 leading-relaxed">
-                    <li>Push the file changes to your **GitHub** repository.</li>
-                    <li>Open your secure GitHub Pages link in **Safari** on your iPhone.</li>
-                    <li>Tap the **Share** button in Safari and choose **Add to Home Screen** to run it natively.</li>
-                    <li>Your device will automatically persist your transactions even when you close the browser window.</li>
-                </ol>
-            </div>
-
-            <!-- Fast Reset Danger Zone -->
             <div class="bg-red-50 rounded-3xl p-5 border border-red-100 space-y-2">
                 <h3 class="font-bold text-red-800 text-sm">Danger Zone</h3>
                 <p class="text-xs text-red-600 leading-relaxed">
@@ -329,10 +329,9 @@
 
     </main>
 
-    <!-- TAB BAR CONTROLLER (STICKY BOTTOM iOS STYLE) -->
+    <!-- TAB BAR CONTROLLER -->
     <nav class="bg-white/80 backdrop-blur-md border-t border-gray-200 fixed bottom-0 left-0 right-0 z-40 pb-safe">
         <div class="max-w-md mx-auto px-6 py-2.5 flex justify-between items-center text-gray-400">
-            <!-- Tab Item: Dashboard -->
             <button id="nav-dashboard" onclick="toggleTab('dashboard')" class="flex flex-col items-center space-y-1 flex-1 ios-tab-active">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
@@ -340,7 +339,6 @@
                 <span class="text-[10px] font-medium">Overview</span>
             </button>
             
-            <!-- Tab Item: Transactions -->
             <button id="nav-transactions" onclick="toggleTab('transactions')" class="flex flex-col items-center space-y-1 flex-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -348,22 +346,19 @@
                 <span class="text-[10px] font-medium">Activity</span>
             </button>
 
-            <!-- Floating Quick Add Button in Tab Bar Center -->
             <div class="flex-1 flex justify-center -mt-6">
                 <button onclick="openModal('add-transaction-modal')" class="w-12 h-12 rounded-full bg-ios-blue text-white shadow-lg shadow-blue-400/50 flex items-center justify-center hover:bg-blue-600 transition-colors transform active:scale-95 duration-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/></svg>
                 </button>
             </div>
 
-            <!-- Tab Item: Categories -->
             <button id="nav-categories" onclick="toggleTab('categories')" class="flex flex-col items-center space-y-1 flex-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                <span class="text-[10px] font-medium">Categories</span>
+                <span class="text-[10px] font-medium">Organize</span>
             </button>
 
-            <!-- Tab Item: Trends -->
             <button id="nav-trends" onclick="toggleTab('trends')" class="flex flex-col items-center space-y-1 flex-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -374,9 +369,88 @@
     </nav>
 
 
+    <!-- ================== MODAL: MONTHLY CHECKING RESET ================== -->
+    <div id="monthly-reset-modal" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] sm:rounded-[30px] p-6 space-y-4 max-h-[90vh] overflow-y-auto transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-ios-green"></span>
+                    <h3 class="text-xl font-bold text-gray-900">Monthly Reset</h3>
+                </div>
+                <button onclick="closeModal('monthly-reset-modal')" class="text-gray-400 bg-gray-100 hover:bg-gray-200 rounded-full p-1.5 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="bg-green-50 border border-green-100 rounded-2xl p-4 space-y-1">
+                <p id="reset-month-header" class="text-xs font-bold text-green-900">Start of New Month Verification</p>
+                <p class="text-[11px] text-green-700 leading-relaxed">Enter your exact checking account balance right now. This keeps your monthly starting balance fully accurate.</p>
+            </div>
+
+            <form id="checking-reset-form" onsubmit="submitCheckingReset(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Checking Balance ($)</label>
+                    <input type="number" step="0.01" id="reset-checking-amount" required placeholder="0.00" class="w-full text-3xl font-extrabold text-gray-900 border-0 border-b border-gray-200 focus:border-ios-green focus:ring-0 pb-2 focus:outline-none placeholder-gray-300">
+                </div>
+
+                <button type="submit" class="w-full bg-ios-green text-white py-4 rounded-2xl font-bold shadow-md hover:bg-green-600 active:scale-[0.98] transition-all">
+                    Confirm & Start Month
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================== MODAL: EDIT TRANSACTION ================== -->
+    <div id="edit-transaction-modal" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] sm:rounded-[30px] p-6 space-y-4 max-h-[90vh] overflow-y-auto transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900">Edit Entry</h3>
+                <button onclick="closeModal('edit-transaction-modal')" class="text-gray-400 bg-gray-100 hover:bg-gray-200 rounded-full p-1.5 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form id="edit-transaction-form" onsubmit="submitTransactionEdit(event)" class="space-y-4">
+                <input type="hidden" id="edit-tx-id">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Amount ($)</label>
+                    <input type="number" step="0.01" id="edit-amount" required class="w-full text-3xl font-extrabold text-gray-900 border-0 border-b border-gray-200 focus:border-ios-blue focus:ring-0 pb-2 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Label / Details</label>
+                    <input type="text" id="edit-desc" required class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
+                </div>
+
+                <div id="edit-category-picker-container">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Category</label>
+                    <select id="edit-category" class="w-full bg-gray-100 text-gray-900 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
+                    </select>
+                </div>
+
+                <div id="edit-account-picker-container">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Payment Method</label>
+                    <select id="edit-account" class="w-full bg-gray-100 text-gray-900 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Date</label>
+                    <input type="date" id="edit-date" required class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
+                </div>
+
+                <button type="submit" class="w-full bg-ios-blue text-white py-4 rounded-2xl font-bold shadow-md hover:bg-blue-600 active:scale-[0.98] transition-all">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+
     <!-- ================== MODAL: ADD TRANSACTION ================== -->
     <div id="add-transaction-modal" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- iOS Bottom Sheet card wrapper -->
         <div class="bg-white w-full max-w-md rounded-t-[30px] sm:rounded-[30px] p-6 space-y-4 max-h-[90vh] overflow-y-auto transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center">
                 <h3 class="text-xl font-bold text-gray-900">Add Entry</h3>
@@ -385,7 +459,6 @@
                 </button>
             </div>
 
-            <!-- Segmented Control (Income / Expense) -->
             <div class="bg-gray-100 p-1 rounded-xl flex">
                 <button type="button" id="type-expense-btn" onclick="setEntryType('expense')" class="flex-1 py-2 text-center rounded-lg text-sm font-bold bg-white text-black shadow-sm transition-all">
                     Expense
@@ -396,44 +469,35 @@
             </div>
 
             <form id="transaction-form" onsubmit="submitTransaction(event)" class="space-y-4">
-                <!-- Hidden inputs -->
                 <input type="hidden" id="entry-type" value="expense">
 
-                <!-- Amount Field -->
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Amount ($)</label>
                     <input type="number" step="0.01" id="entry-amount" required placeholder="0.00" class="w-full text-3xl font-extrabold text-gray-900 border-0 border-b border-gray-200 focus:border-ios-blue focus:ring-0 pb-2 focus:outline-none placeholder-gray-300">
                 </div>
 
-                <!-- Description / Vendor -->
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Label / Details</label>
                     <input type="text" id="entry-desc" required placeholder="e.g. Grocery store, Rent, Salary..." class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
                 </div>
 
-                <!-- Category Selector -->
                 <div id="category-picker-container">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Category</label>
                     <select id="entry-category" class="w-full bg-gray-100 text-gray-900 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
-                        <!-- Dynamic options loaded -->
                     </select>
                 </div>
 
-                <!-- Account / Card Selector -->
                 <div id="account-picker-container">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Payment Method (Put purchase on)</label>
                     <select id="entry-account" class="w-full bg-gray-100 text-gray-900 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
-                        <!-- Dynamic options loaded -->
                     </select>
                 </div>
 
-                <!-- Date Picker -->
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Transaction Date</label>
                     <input type="date" id="entry-date" required class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
                 </div>
 
-                <!-- Monthly Recurring Toggle -->
                 <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-2xl py-3 px-4">
                     <div>
                         <span class="block text-xs font-bold text-gray-700">Monthly Recurring</span>
@@ -445,7 +509,6 @@
                     </label>
                 </div>
 
-                <!-- Submit Button -->
                 <button type="submit" class="w-full bg-ios-blue text-white py-4 rounded-2xl font-bold shadow-md hover:bg-blue-600 active:scale-[0.98] transition-all">
                     Add Transaction
                 </button>
@@ -465,26 +528,42 @@
             </div>
 
             <form id="category-form" onsubmit="submitCategory(event)" class="space-y-4">
-                <!-- Name -->
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Category Name</label>
                     <input type="text" id="cat-name" required placeholder="e.g. Subscriptions, Pet Care" class="w-full bg-gray-100 border-0 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-ios-blue focus:outline-none">
                 </div>
 
-                <!-- Accent Color Picker -->
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Identify Color</label>
                     <div class="grid grid-cols-6 gap-3 pt-2" id="color-palette-picker">
-                        <!-- Custom Palette Options populated on startup -->
                     </div>
                     <input type="hidden" id="cat-selected-color" value="#007AFF">
                 </div>
 
-                <!-- Submit Button -->
                 <button type="submit" class="w-full bg-ios-blue text-white py-4 rounded-2xl font-bold shadow-md hover:bg-blue-600 active:scale-[0.98] transition-all">
                     Create Tag
                 </button>
             </form>
+        </div>
+    </div>
+
+
+    <!-- ================== MODAL: CONFIRM CATEGORY DELETE ================== -->
+    <div id="confirm-category-delete-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-xl transform scale-95 transition-transform duration-200">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-ios-red flex items-center justify-center mx-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h4 class="font-bold text-gray-900 text-lg">Delete Category?</h4>
+            <p id="confirm-category-msg" class="text-xs text-gray-600 leading-relaxed"></p>
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeModal('confirm-category-delete-modal')" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl font-bold text-xs hover:bg-gray-200 transition-colors">
+                    Cancel
+                </button>
+                <button id="exec-category-delete-btn" class="w-full bg-ios-red text-white py-2.5 rounded-xl font-bold text-xs hover:bg-red-600 transition-colors">
+                    Delete
+                </button>
+            </div>
         </div>
     </div>
 
@@ -503,7 +582,6 @@
 
     <!-- ================== JAVASCRIPT APP LOGIC ================== -->
     <script>
-        // MASTER CONSTANTS FOR DEFAULT VALUES
         const DEFAULT_CATEGORIES = [
             { id: 'cat-rent', name: 'Rent', color: '#AF52DE' },
             { id: 'cat-phone', name: 'Phone', color: '#5AC8FA' },
@@ -535,28 +613,29 @@
             'Debit Card / Cash'
         ];
 
-        // Setup initial default structure state using Master Constants
         let database = {
             transactions: [],
             categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
             accounts: [...DEFAULT_ACCOUNTS],
-            exclusions: []
+            exclusions: [],
+            lastVerifiedMonth: null
         };
 
         const presetColors = ['#007AFF', '#34C759', '#FF3B30', '#FF9500', '#FFCC00', '#AF52DE', '#5AC8FA', '#4CD964', '#FF2D55', '#5856D6', '#E5E5EA', '#34AADC'];
         let activeTab = 'dashboard';
         let transactionFilter = 'all';
         let activeFilterMonth = 'all'; 
+        let expandedCategoryId = null; 
+        let expandedAccountId = null; 
         let pieChartInstance = null;
         let barChartInstance = null;
+        let cardTrendsChartInstance = null; // Chart instance for card trends
 
-        // IndexedDB Configuration
         const DB_NAME = 'iFinanceLocalDB';
         const DB_VERSION = 1;
         const STORE_NAME = 'financial_state';
         let dbInstance = null;
 
-        // Initialize Local Persistent Storage Engine
         function initStorage(callback) {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -574,20 +653,17 @@
 
             request.onerror = function(event) {
                 console.error("IndexedDB error:", event.target.errorCode);
-                loadFromStorage(callback); // Fallback to LocalStorage immediately on error
+                loadFromStorage(callback);
             };
         }
 
-        // Save state down to both IndexedDB and LocalStorage (Dual-Redundancy)
         function saveToStorage() {
-            // 1. Immediately backup to LocalStorage for zero-lag safety
             try {
                 localStorage.setItem('boona_money_state', JSON.stringify(database));
             } catch (err) {
                 console.error("Failed to write to LocalStorage:", err);
             }
 
-            // 2. Persist safely in IndexedDB
             if (!dbInstance) return;
             try {
                 const transaction = dbInstance.transaction([STORE_NAME], 'readwrite');
@@ -598,9 +674,7 @@
             }
         }
 
-        // Load state from IndexedDB with safety structures
         function loadFromStorage(callback) {
-            // First pass: instantly load from local storage if available to keep layout snappy
             try {
                 const localData = localStorage.getItem('boona_money_state');
                 if (localData) {
@@ -615,6 +689,7 @@
 
             if (!dbInstance) {
                 applyMonthlyRecurringTransactions();
+                checkNewMonthResetPrompt();
                 if (callback) callback();
                 return;
             }
@@ -627,23 +702,23 @@
                 if (event.target.result) {
                     applyLoadedData(event.target.result);
                 }
-                // Automatically generate any missed monthly recurring items
                 applyMonthlyRecurringTransactions();
+                checkNewMonthResetPrompt();
                 if (callback) callback();
             };
 
             request.onerror = function() {
                 applyMonthlyRecurringTransactions();
+                checkNewMonthResetPrompt();
                 if (callback) callback();
             };
         }
 
-        // Standardize data healing loader
         function applyLoadedData(loaded) {
             database.transactions = loaded.transactions || [];
             database.exclusions = loaded.exclusions || [];
+            database.lastVerifiedMonth = loaded.lastVerifiedMonth || null;
 
-            // Prevent empty or cleared category overrides
             if (loaded.categories && loaded.categories.length > 1) {
                 database.categories = loaded.categories;
             } else {
@@ -657,14 +732,67 @@
             }
         }
 
-        // Automated Monthly Recurring Generator Engine
+        function checkNewMonthResetPrompt() {
+            const today = new Date();
+            const currentYM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (database.lastVerifiedMonth !== currentYM) {
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                document.getElementById('reset-month-header').innerText = `${monthNames[today.getMonth()]} ${today.getFullYear()} Fresh Start`;
+                openModal('monthly-reset-modal');
+            }
+        }
+
+        function submitCheckingReset(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('reset-checking-amount').value);
+            
+            if (isNaN(amount) || amount < 0) {
+                showAlert('Invalid Amount', 'Please input a valid balance amount ($0.00 or higher).');
+                return;
+            }
+
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const currentYM = `${year}-${month}`;
+            const firstOfMonthStr = `${currentYM}-01`;
+
+            database.transactions = database.transactions.filter(tx => 
+                !(tx.desc === 'Starting Checking Balance' && tx.date.substring(0, 7) === currentYM)
+            );
+
+            if (amount > 0) {
+                const resetTx = {
+                    id: 'tx-reset-' + Date.now(),
+                    amount: amount,
+                    desc: 'Starting Checking Balance',
+                    type: 'income',
+                    category: 'Salary',
+                    date: firstOfMonthStr,
+                    account: 'Debit Card / Cash',
+                    isMonthly: false,
+                    parentId: null
+                };
+                database.transactions.push(resetTx);
+            }
+
+            database.lastVerifiedMonth = currentYM;
+            
+            document.getElementById('reset-checking-amount').value = '';
+            closeModal('monthly-reset-modal');
+            saveToStorage();
+            refreshAllUI();
+            
+            showAlert('Month Reset Complete', 'Your starting checking balance has been set for this month.');
+        }
+
         function applyMonthlyRecurringTransactions() {
             let stateChanged = false;
             const today = new Date();
             const currentYear = today.getFullYear();
-            const currentMonth = today.getMonth(); // 0-11
+            const currentMonth = today.getMonth();
 
-            // Find master templates (isMonthly is true, and has no parentTemplateId)
             const templates = database.transactions.filter(tx => tx.isMonthly && !tx.parentId);
 
             templates.forEach(template => {
@@ -672,7 +800,6 @@
                 const tempYear = tempDate.getFullYear();
                 const tempMonth = tempDate.getMonth();
 
-                // Calculate month difference
                 let yearDiff = currentYear - tempYear;
                 let monthDiff = currentMonth - tempMonth;
                 let totalMonths = (yearDiff * 12) + monthDiff;
@@ -684,12 +811,10 @@
 
                     const targetYM = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}`;
 
-                    // Check if a generated recurring copy already exists for this target Year-Month
                     const alreadyExists = database.transactions.some(tx => 
                         tx.parentId === template.id && tx.date.substring(0, 7) === targetYM
                     );
 
-                    // Check if this specific occurrence has been explicitly excluded/deleted by the user
                     const isExcluded = database.exclusions && database.exclusions.includes(`${template.id}_${targetYM}`);
 
                     if (!alreadyExists && !isExcluded) {
@@ -719,18 +844,15 @@
             }
         }
 
-        // Window Startup Lifecycle
         window.addEventListener('DOMContentLoaded', () => {
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
 
-            // Format headers to local system timezone
             const options = { weekday: 'long', month: 'long', day: 'numeric' };
             document.getElementById('current-date').innerText = today.toLocaleDateString('en-US', options);
             
-            // Set date-picker's initial value based on local system time instead of UTC to avoid timezone drift
             document.getElementById('entry-date').value = `${year}-${month}-${day}`;
 
             initStorage(() => {
@@ -759,6 +881,7 @@
                 renderTransactions();
             } else if (tabName === 'categories') {
                 renderCategoryList();
+                renderAccountList();
                 renderRecurringCommitments();
             }
         }
@@ -768,8 +891,11 @@
             renderTotals();
             populateCategorySelectors();
             populateAccountSelectors();
-            renderCategoryList();
-            renderRecurringCommitments();
+            if (activeTab === 'categories') {
+                renderCategoryList();
+                renderAccountList();
+                renderRecurringCommitments();
+            }
             renderRecentTransactions();
             renderDashboardCharts();
         }
@@ -781,7 +907,7 @@
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
-            const currentYearMonthStr = `${year}-${month}`; // FIXED: Uses local timezone date string instead of UTC
+            const currentYearMonthStr = `${year}-${month}`;
 
             database.transactions.forEach(tx => {
                 const txYearMonth = tx.date.substring(0, 7);
@@ -814,7 +940,7 @@
                 const isExpense = tx.type === 'expense';
                 
                 const itemHtml = `
-                    <div class="flex items-center justify-between p-1">
+                    <div onclick="openEditModal('${tx.id}')" class="flex items-center justify-between p-1.5 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer">
                         <div class="flex items-center space-x-3 overflow-hidden">
                             <span class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0" style="background-color: ${color}">
                                 ${tx.category ? tx.category.charAt(0).toUpperCase() : '?' }
@@ -936,8 +1062,8 @@
                 const isExpense = tx.type === 'expense';
                 
                 const card = `
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between active:bg-gray-50 transition-colors">
-                        <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between transition-colors">
+                        <div onclick="openEditModal('${tx.id}')" class="flex items-center space-x-3 overflow-hidden cursor-pointer flex-grow pr-2">
                             <span class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0" style="background-color: ${color}">
                                 ${tx.category ? tx.category.charAt(0).toUpperCase() : '?'}
                             </span>
@@ -952,12 +1078,15 @@
                                 </p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-3 flex-shrink-0">
+                        <div class="flex items-center space-x-2 flex-shrink-0">
                             <span class="text-sm font-extrabold ${isExpense ? 'text-gray-800' : 'text-ios-green'}">
                                 ${isExpense ? '-' : '+'}${formatCurrency(tx.amount)}
                             </span>
+                            <button onclick="openEditModal('${tx.id}')" class="text-gray-400 hover:text-ios-blue p-1 rounded-full hover:bg-gray-50" title="Edit entry">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
                             <button onclick="deleteTransaction('${tx.id}')" class="text-gray-300 hover:text-ios-red p-1 rounded-full hover:bg-gray-50" title="Delete record">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </button>
                         </div>
                     </div>
@@ -1008,12 +1137,67 @@
             showAlert('Commitment Cancelled', 'The recurring commitment has been removed.');
         }
 
+        // EDIT TRANSACTION MODAL LOGIC
+        function openEditModal(txId) {
+            const tx = database.transactions.find(t => t.id === txId);
+            if (!tx) return;
+
+            document.getElementById('edit-tx-id').value = tx.id;
+            document.getElementById('edit-amount').value = tx.amount;
+            document.getElementById('edit-desc').value = tx.desc;
+            document.getElementById('edit-date').value = tx.date;
+
+            const catSelect = document.getElementById('edit-category');
+            catSelect.innerHTML = '';
+            database.categories.forEach(c => {
+                const isSel = c.name === tx.category ? 'selected' : '';
+                catSelect.insertAdjacentHTML('beforeend', `<option value="${c.name}" ${isSel}>${c.name}</option>`);
+            });
+
+            const accSelect = document.getElementById('edit-account');
+            accSelect.innerHTML = '';
+            database.accounts.forEach(a => {
+                const isSel = a === (tx.account || 'Debit Card / Cash') ? 'selected' : '';
+                accSelect.insertAdjacentHTML('beforeend', `<option value="${a}" ${isSel}>${a}</option>`);
+            });
+
+            openModal('edit-transaction-modal');
+        }
+
+        function submitTransactionEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-tx-id').value;
+            const amount = parseFloat(document.getElementById('edit-amount').value);
+            const desc = document.getElementById('edit-desc').value.trim();
+            const category = document.getElementById('edit-category').value;
+            const account = document.getElementById('edit-account').value;
+            const date = document.getElementById('edit-date').value;
+
+            const tx = database.transactions.find(t => t.id === id);
+            if (!tx) return;
+
+            tx.amount = amount;
+            tx.desc = desc;
+            tx.category = category;
+            tx.account = account;
+            tx.date = date;
+
+            saveToStorage();
+            closeModal('edit-transaction-modal');
+            refreshAllUI();
+
+            if (activeTab === 'transactions') {
+                renderTransactions();
+            }
+            showAlert('Updated!', 'Transaction details saved successfully.');
+        }
+
         // ------------------ CHARTS COMPONENT ------------------
         function renderDashboardCharts() {
             const today = new Date();
             const year = today.getFullYear();
             const monthStr = String(today.getMonth() + 1).padStart(2, '0');
-            const currentYearMonth = `${year}-${monthStr}`; // FIXED: Local timezone monthly calculation
+            const currentYearMonth = `${year}-${monthStr}`;
             
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             document.getElementById('current-month-lbl').innerText = `${monthNames[today.getMonth()]} ${year}`;
@@ -1095,6 +1279,7 @@
         }
 
         function renderTrendsCharts() {
+            // 1. Income vs Expenses Chart
             const monthlyData = {};
 
             database.transactions.forEach(tx => {
@@ -1120,7 +1305,6 @@
             if (sortedMonths.length === 0) {
                 emptyState.classList.remove('hidden');
                 canvasElement.classList.add('opacity-0');
-                return;
             } else {
                 emptyState.classList.add('hidden');
                 canvasElement.classList.remove('opacity-0');
@@ -1190,6 +1374,96 @@
                     }
                 }
             });
+
+            // 2. Render Card Spending Trends
+            renderCardTrends();
+        }
+
+        // NEW: CARD TRENDS RENDERER
+        function renderCardTrends() {
+            const canvasElement = document.getElementById('cardTrendsBarChart');
+            const summaryList = document.getElementById('card-trends-summary-list');
+            if (!canvasElement || !summaryList) return;
+
+            summaryList.innerHTML = '';
+
+            const monthlyCardData = {}; // { 'YYYY-MM': { 'BOA Credit Card': 150, ... } }
+            const allAccounts = new Set(database.accounts);
+
+            database.transactions.forEach(tx => {
+                if (tx.type === 'expense') {
+                    const mY = tx.date.substring(0, 7);
+                    const acc = tx.account || 'Debit Card / Cash';
+                    if (!monthlyCardData[mY]) monthlyCardData[mY] = {};
+                    monthlyCardData[mY][acc] = (monthlyCardData[mY][acc] || 0) + tx.amount;
+                    allAccounts.add(acc);
+                }
+            });
+
+            const sortedMonths = Object.keys(monthlyCardData).sort();
+            const accountList = Array.from(allAccounts);
+
+            const cardColors = ['#007AFF', '#FF9500', '#34C759', '#AF52DE', '#FF3B30', '#5AC8FA', '#FFCC00', '#5856D6'];
+
+            const datasets = accountList.map((acc, idx) => {
+                const data = sortedMonths.map(mY => monthlyCardData[mY][acc] || 0);
+                return {
+                    label: acc,
+                    data: data,
+                    backgroundColor: cardColors[idx % cardColors.length],
+                    borderRadius: 4
+                };
+            });
+
+            if (cardTrendsChartInstance) {
+                cardTrendsChartInstance.destroy();
+            }
+
+            const ctx = canvasElement.getContext('2d');
+            cardTrendsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths.map(formatMonthLabel),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } },
+                        y: { stacked: true, beginAtZero: true, grid: { color: '#F2F2F7' }, ticks: { font: { size: 9 } } }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, font: { size: 9 } }
+                        }
+                    }
+                }
+            });
+
+            // Card Lifetime/All-Time Summary Cards
+            accountList.forEach((acc, idx) => {
+                let totalAccSpent = 0;
+                database.transactions.forEach(tx => {
+                    if (tx.type === 'expense' && (tx.account === acc || (!tx.account && acc === 'Debit Card / Cash'))) {
+                        totalAccSpent += tx.amount;
+                    }
+                });
+
+                if (totalAccSpent > 0) {
+                    const row = `
+                        <div class="flex justify-between items-center py-2 px-1 text-xs">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${cardColors[idx % cardColors.length]}"></span>
+                                <span class="font-bold text-gray-800">${escapeHtml(acc)}</span>
+                            </div>
+                            <span class="font-extrabold text-gray-900">${formatCurrency(totalAccSpent)}</span>
+                        </div>
+                    `;
+                    summaryList.insertAdjacentHTML('beforeend', row);
+                }
+            });
         }
 
 
@@ -1200,25 +1474,165 @@
             container.innerHTML = '';
 
             database.categories.forEach(cat => {
-                const usageCount = database.transactions.filter(tx => tx.category === cat.name).length;
+                const categoryTxns = database.transactions.filter(tx => tx.category === cat.name);
+                const usageCount = categoryTxns.length;
+                const totalSpent = categoryTxns.reduce((sum, tx) => sum + (tx.type === 'expense' ? tx.amount : 0), 0);
+                const isExpanded = expandedCategoryId === cat.id;
+
+                let txnsListHtml = '';
+                if (isExpanded) {
+                    if (categoryTxns.length === 0) {
+                        txnsListHtml = `<p class="text-[11px] text-gray-400 py-2 pl-7 italic">No purchases recorded under ${escapeHtml(cat.name)} yet.</p>`;
+                    } else {
+                        const sorted = [...categoryTxns].sort((a, b) => new Date(b.date) - new Date(a.date));
+                        txnsListHtml = sorted.map(tx => `
+                            <div class="flex justify-between items-center py-2 pl-7 pr-1 text-xs border-t border-gray-50">
+                                <div>
+                                    <span class="font-bold text-gray-800">${escapeHtml(tx.desc)}</span>
+                                    <span class="text-[10px] text-gray-400 block">${formatDisplayDate(tx.date)} ${tx.account && tx.account !== 'N/A' ? '• ' + tx.account : ''}</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-extrabold ${tx.type === 'expense' ? 'text-gray-800' : 'text-ios-green'}">${formatCurrency(tx.amount)}</span>
+                                    <button onclick="event.stopPropagation(); openEditModal('${tx.id}')" class="text-ios-blue text-[10px] font-bold bg-blue-50 px-2 py-1 rounded-md hover:bg-blue-100">Edit</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
 
                 const row = `
-                    <div class="flex items-center justify-between py-3.5">
-                        <div class="flex items-center space-x-3">
-                            <span class="w-4 h-4 rounded-full flex-shrink-0" style="background-color: ${cat.color}"></span>
-                            <span class="text-sm font-bold text-gray-800">${escapeHtml(cat.name)}</span>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full font-medium">${usageCount} entries</span>
+                    <div class="py-3">
+                        <div onclick="toggleCategoryExpand('${cat.id}')" class="flex items-center justify-between cursor-pointer active:opacity-70 transition-opacity">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-4 h-4 rounded-full flex-shrink-0" style="background-color: ${cat.color}"></span>
+                                <div>
+                                    <span class="text-sm font-bold text-gray-800">${escapeHtml(cat.name)}</span>
+                                    <span class="text-[10px] text-gray-400 block">${usageCount} entries • Total: ${formatCurrency(totalSpent)}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-400">${isExpanded ? '&#9650;' : '&#9660;'}</span>
+                                <button onclick="event.stopPropagation(); promptDeleteCategory('${cat.id}')" class="text-gray-300 hover:text-ios-red p-1.5 rounded-full" title="Remove custom category">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
                         </div>
-                        <button onclick="deleteCategory('${cat.id}')" class="text-gray-300 hover:text-ios-red p-1.5 rounded-full" title="Remove custom category">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
+                        ${isExpanded ? `<div class="mt-2 bg-gray-50 rounded-2xl p-2 space-y-1">${txnsListHtml}</div>` : ''}
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', row);
             });
         }
 
-        // Render Monthly Commitments Panel
+        // Render Cards/Accounts Drill-down
+        function renderAccountList() {
+            const container = document.getElementById('accounts-grid-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            database.accounts.forEach(acc => {
+                const accTxns = database.transactions.filter(tx => tx.account === acc);
+                const usageCount = accTxns.length;
+                const totalSpent = accTxns.reduce((sum, tx) => sum + (tx.type === 'expense' ? tx.amount : 0), 0);
+                const isExpanded = expandedAccountId === acc;
+
+                let txnsListHtml = '';
+                if (isExpanded) {
+                    if (accTxns.length === 0) {
+                        txnsListHtml = `<p class="text-[11px] text-gray-400 py-2 pl-7 italic">No purchases recorded on ${escapeHtml(acc)} yet.</p>`;
+                    } else {
+                        const sorted = [...accTxns].sort((a, b) => new Date(b.date) - new Date(a.date));
+                        txnsListHtml = sorted.map(tx => `
+                            <div class="flex justify-between items-center py-2 pl-7 pr-1 text-xs border-t border-gray-50">
+                                <div>
+                                    <span class="font-bold text-gray-800">${escapeHtml(tx.desc)}</span>
+                                    <span class="text-[10px] text-gray-400 block">${formatDisplayDate(tx.date)} • ${tx.category}</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-extrabold ${tx.type === 'expense' ? 'text-gray-800' : 'text-ios-green'}">${formatCurrency(tx.amount)}</span>
+                                    <button onclick="event.stopPropagation(); openEditModal('${tx.id}')" class="text-ios-blue text-[10px] font-bold bg-blue-50 px-2 py-1 rounded-md hover:bg-blue-100">Edit</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                const iconSvg = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>`;
+
+                const row = `
+                    <div class="py-3">
+                        <div onclick="toggleAccountExpand('${escapeHtml(acc)}')" class="flex items-center justify-between cursor-pointer active:opacity-70 transition-opacity">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-8 h-8 rounded-full flex-shrink-0 bg-gray-300 flex items-center justify-center">${iconSvg}</span>
+                                <div>
+                                    <span class="text-sm font-bold text-gray-800">${escapeHtml(acc)}</span>
+                                    <span class="text-[10px] text-gray-400 block">${usageCount} entries • Total Spent: ${formatCurrency(totalSpent)}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-400">${isExpanded ? '&#9650;' : '&#9660;'}</span>
+                            </div>
+                        </div>
+                        ${isExpanded ? `<div class="mt-2 bg-gray-50 rounded-2xl p-2 space-y-1">${txnsListHtml}</div>` : ''}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        function toggleCategoryExpand(catId) {
+            expandedCategoryId = expandedCategoryId === catId ? null : catId;
+            expandedAccountId = null; 
+            renderCategoryList();
+            renderAccountList();
+        }
+
+        function toggleAccountExpand(acc) {
+            expandedAccountId = expandedAccountId === acc ? null : acc;
+            expandedCategoryId = null; 
+            renderAccountList();
+            renderCategoryList();
+        }
+
+        function promptDeleteCategory(catId) {
+            const target = database.categories.find(c => c.id === catId);
+            if (!target) return;
+
+            if (target.name === 'Other') {
+                showAlert('Operation Denied', 'The tag "Other" acts as a fallback system categorizer and cannot be removed.');
+                return;
+            }
+
+            const usageCount = database.transactions.filter(tx => tx.category === target.name).length;
+            document.getElementById('confirm-category-msg').innerText = `Are you sure you want to delete "${target.name}"? ${usageCount} transaction(s) using this category will be re-assigned to "Other".`;
+            
+            const execBtn = document.getElementById('exec-category-delete-btn');
+            execBtn.onclick = function() {
+                executeCategoryDelete(catId);
+            };
+
+            openModal('confirm-category-delete-modal');
+        }
+
+        function executeCategoryDelete(catId) {
+            const target = database.categories.find(c => c.id === catId);
+            if (!target) return;
+
+            database.transactions.forEach(tx => {
+                if (tx.category === target.name) {
+                    tx.category = 'Other';
+                }
+            });
+
+            database.categories = database.categories.filter(c => c.id !== catId);
+            if (expandedCategoryId === catId) expandedCategoryId = null;
+
+            closeModal('confirm-category-delete-modal');
+            saveToStorage();
+            refreshAllUI();
+            showAlert('Category Deleted', `The category "${target.name}" was removed. Associated entries moved to "Other".`);
+        }
+
         function renderRecurringCommitments() {
             const container = document.getElementById('recurring-commitments-list');
             const totalEl = document.getElementById('recurring-overhead-total');
@@ -1226,7 +1640,6 @@
 
             container.innerHTML = '';
             
-            // Filters out parent templates (isMonthly is true, and has no parentId)
             const templates = database.transactions.filter(tx => tx.isMonthly && !tx.parentId);
 
             let totalOverhead = 0;
@@ -1273,31 +1686,9 @@
             totalEl.innerText = formatCurrency(totalOverhead);
         }
 
-        function deleteCategory(catId) {
-            const target = database.categories.find(c => c.id === catId);
-            if (!target) return;
-
-            if (target.name === 'Other') {
-                showAlert('Operation Denied', 'The tag "Other" acts as a fallback system categorizer and cannot be removed.');
-                return;
-            }
-
-            database.transactions.forEach(tx => {
-                if (tx.category === target.name) {
-                    tx.category = 'Other';
-                }
-            });
-
-            database.categories = database.categories.filter(c => c.id !== catId);
-            saveToStorage();
-            refreshAllUI();
-            showAlert('Category Deleted', 'Associated transactions have been set to "Other".');
-        }
-
         function populateCategorySelectors() {
             const selectEl = document.getElementById('entry-category');
             selectEl.innerHTML = '';
-            
             database.categories.forEach(cat => {
                 selectEl.insertAdjacentHTML('beforeend', `<option value="${cat.name}">${cat.name}</option>`);
             });
@@ -1306,7 +1697,6 @@
         function populateAccountSelectors() {
             const selectEl = document.getElementById('entry-account');
             selectEl.innerHTML = '';
-            
             database.accounts.forEach(acc => {
                 selectEl.insertAdjacentHTML('beforeend', `<option value="${acc}">${acc}</option>`);
             });
@@ -1315,7 +1705,6 @@
         function buildColorPalette() {
             const container = document.getElementById('color-palette-picker');
             container.innerHTML = '';
-            
             presetColors.forEach((color, i) => {
                 const isActive = i === 0;
                 const activeBorder = isActive ? 'ring-4 ring-offset-2 ring-ios-blue' : '';
@@ -1336,7 +1725,6 @@
             el.className += ' ring-4 ring-offset-2 ring-ios-blue';
             document.getElementById('cat-selected-color').value = color;
         }
-
 
         // ------------------ TRANSACTION FORM SUBMISSION ------------------
         function setEntryType(type) {
@@ -1383,12 +1771,11 @@
                 date: date,
                 account: account,
                 isMonthly: isMonthly,
-                parentId: null // Denotes this is the primary parent template
+                parentId: null
             };
 
             database.transactions.push(newTx);
             
-            // Clean up inputs and reset back to local date values
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -1400,8 +1787,6 @@
             document.getElementById('entry-monthly').checked = false;
             
             closeModal('add-transaction-modal');
-            
-            // Immediately run monthly recurring updates to populate if they entered a historic date
             applyMonthlyRecurringTransactions();
             
             saveToStorage();
@@ -1409,7 +1794,6 @@
             
             showAlert('Success!', `Transaction recorded: "${desc}"`);
         }
-
 
         // ------------------ CATEGORY FORM SUBMISSION ------------------
         function submitCategory(e) {
@@ -1437,8 +1821,7 @@
             showAlert('Category Created', `Tag "${name}" is now ready for use.`);
         }
 
-
-        // ------------------ BACKUP LOGER UTILITIES ------------------
+        // ------------------ BACKUP UTILITIES ------------------
         function exportDataBackup() {
             try {
                 const rawString = JSON.stringify(database, null, 2);
@@ -1456,7 +1839,7 @@
                 triggerLink.click();
                 document.body.removeChild(triggerLink);
                 
-                showAlert('Database Exported', 'Backup successfully generated! Store this safely on your hard drive to import anytime.');
+                showAlert('Database Exported', 'Backup successfully generated! Store this safely to import anytime.');
             } catch (err) {
                 showAlert('Export Failed', 'An error occurred building your download asset: ' + err.message);
             }
@@ -1473,14 +1856,7 @@
                     
                     if (parsed && Array.isArray(parsed.transactions) && Array.isArray(parsed.categories)) {
                         if (!parsed.accounts) {
-                            parsed.accounts = [
-                                'BOA Credit Card',
-                                'Discover Credit Card',
-                                'Apple Credit Card',
-                                'Chase Credit Card',
-                                'AMEX Credit card',
-                                'Debit Card / Cash'
-                            ];
+                            parsed.accounts = [...DEFAULT_ACCOUNTS];
                         }
                         if (!parsed.exclusions) {
                             parsed.exclusions = [];
@@ -1509,7 +1885,8 @@
                     transactions: [],
                     categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
                     accounts: [...DEFAULT_ACCOUNTS],
-                    exclusions: []
+                    exclusions: [],
+                    lastVerifiedMonth: null
                 };
                 saveToStorage();
                 refreshAllUI();
@@ -1518,8 +1895,7 @@
             }
         }
 
-
-        // ------------------ MODAL VIEW CONTROLLERS ------------------
+        // MODAL VIEW CONTROLLERS
         function openModal(id) {
             const modal = document.getElementById(id);
             modal.classList.remove('pointer-events-none');
@@ -1530,7 +1906,6 @@
             content.classList.add('translate-y-0', 'sm:scale-100');
         }
 
-        // Action sheet dismiss
         function closeModal(id) {
             const modal = document.getElementById(id);
             modal.classList.add('pointer-events-none');
@@ -1560,8 +1935,7 @@
             modal.firstElementChild.classList.add('scale-95');
         }
 
-
-        // ------------------ HELPERS ------------------
+        // HELPERS
         function getCategoryColor(catName) {
             const match = database.categories.find(c => c.name.toLowerCase() === (catName || '').toLowerCase());
             return match ? match.color : '#8E8E93';
